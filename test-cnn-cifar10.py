@@ -1,7 +1,6 @@
 # test harness for evaluating models on the cifar10 dataset
-import sys
 import timeit
-from matplotlib import pyplot
+# save the final model to file
 from keras.datasets import cifar10
 from keras.utils import to_categorical
 from keras.models import Sequential
@@ -33,43 +32,23 @@ def prep_pixels(train, test):
 
 # define cnn model
 def define_model():
-	# example of a 3-block vgg style architecture
 	model = Sequential()
 	model.add(Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same', input_shape=(32, 32, 3)))
 	model.add(Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'))
 	model.add(MaxPooling2D((2, 2)))
-	# model.add(Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'))
-	# model.add(Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'))
-	# model.add(MaxPooling2D((2, 2)))
-	# model.add(Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'))
-	# model.add(Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'))
-	# model.add(MaxPooling2D((2, 2)))
-	# example output part of the model
+	model.add(Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'))
+	model.add(Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'))
+	model.add(MaxPooling2D((2, 2)))
+	model.add(Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'))
+	model.add(Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'))
+	model.add(MaxPooling2D((2, 2)))
 	model.add(Flatten())
 	model.add(Dense(128, activation='relu', kernel_initializer='he_uniform'))
 	model.add(Dense(10, activation='softmax'))
 	# compile model
 	opt = SGD(lr=0.001, momentum=0.9)
 	model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
-	# ...
 	return model
-
-# plot diagnostic learning curves
-def summarize_diagnostics(history):
-	# plot loss
-	pyplot.subplot(211)
-	pyplot.title('Cross Entropy Loss')
-	pyplot.plot(history.history['loss'], color='blue', label='train')
-	pyplot.plot(history.history['val_loss'], color='orange', label='test')
-	# plot accuracy
-	pyplot.subplot(212)
-	pyplot.title('Classification Accuracy')
-	pyplot.plot(history.history['acc'], color='blue', label='train')
-	pyplot.plot(history.history['val_acc'], color='orange', label='test')
-	# save plot to file
-	filename = sys.argv[0].split('/')[-1]
-	pyplot.savefig(filename + '_plot.png')
-	pyplot.close()
 
 # run the test harness for evaluating a model
 def run_test_harness():
@@ -80,15 +59,12 @@ def run_test_harness():
 	# define model
 	model = define_model()
 	# fit model
-	history = model.fit(trainX, trainY, epochs=100, batch_size=64, validation_data=(testX, testY), verbose=0)
-	# evaluate model
-	_, acc = model.evaluate(testX, testY, verbose=0)
-	print('> %.3f' % (acc * 100.0))
-	# learning curves
-	summarize_diagnostics(history)
+	model.fit(trainX, trainY, epochs=40, batch_size=32, verbose=0)
+	# save model
+	model.save('final_model.h5')
 
 # entry point, run the test harness
 tic = timeit.default_timer()
 run_test_harness()
 toc = timeit.default_timer()
-print('Elapsed time: ' % (toc - tic))
+print('Elapsed time: %d' % (toc - tic))
